@@ -1,0 +1,4 @@
+nginx
+node_modules
+.vscode
+docker-compose.yaml
