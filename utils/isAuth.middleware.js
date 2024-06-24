@@ -19,7 +19,7 @@ const isAuth = async (req, res, next) => {
 			});
 		}
 		const payload = jwt.verify(token, constants.JWT_SECRET);
-		const {email} = payload.sub;
+		const email = payload.sub;
 		const user = await User.findOne({email});
 		if (!user) {
 			return res.status(404).json({

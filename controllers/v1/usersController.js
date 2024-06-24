@@ -3,6 +3,33 @@ const jwt = require('jsonwebtoken');
 const UserModel = require('../../models/User.js');
 const Task = require('../../models/Task.js');
 const constants = require('../../utils/constants.js');
+const Token = require('../../models/Token.js');
+
+const getAccessToken = (user) => {
+	const payload = {
+		sub: user.email,
+	};
+
+	const token = jwt.sign(payload, constants.JWT_SECRET, {
+		expiresIn: '10m',
+	});
+	return token;
+};
+
+const getRefreshToken = async (user) => {
+	let refresh_token = await Token.findOne({user: user.id});
+
+	if (refresh_token) return refresh_token.token;
+
+	const payload = {
+		sub: user.email,
+	};
+
+	const token = jwt.sign(payload, constants.JWT_SECRET_RT);
+	refresh_token = Token({user: user.id, token});
+	await refresh_token.save();
+	return token;
+};
 
 module.exports.registerUser = async (req, res, next) => {
 	try {
@@ -58,19 +85,12 @@ module.exports.login = async (req, res, next) => {
 			});
 		}
 
-		const payload = {
-			sub: {
-				email: user.email,
-			},
-		};
-
-		const token = jwt.sign(payload, constants.JWT_SECRET, {
-			expiresIn: '30m',
-		});
+		const access_token = getAccessToken(user);
+		const refresh_token = await getRefreshToken(user);
 
 		return res.status(200).json({
 			msg: 'User Logged In',
-			token,
+			data: {access_token, refresh_token},
 		});
 	} catch (err) {
 		next(err);
@@ -98,6 +118,50 @@ module.exports.deleteUser = async (req, res, next) => {
 		const user = req.user;
 		await Task.deleteMany({owner: user.id});
 		await UserModel.findByIdAndDelete(user.id);
+		return res.sendStatus(204);
+	} catch (err) {
+		next(err);
+	}
+};
+
+module.exports.token = async (req, res, next) => {
+	try {
+		const {refresh_token} = req.body;
+		if (!refresh_token) {
+			return res.status(401).json({
+				msg: 'UnAuthorized',
+			});
+		}
+		const token = await Token.findOne({token: refresh_token}).populate(
+			'user'
+		);
+		if (!token) {
+			return res.status(401).json({
+				msg: 'UnAuthorized',
+			});
+		}
+		const user = token.user;
+		if (!user) {
+			return res.status(401).json({
+				msg: 'UnAuthorized',
+			});
+		}
+		const access_token = getAccessToken(user);
+		return res.status(200).json({
+			msg: 'New Access Token Generated',
+			data: {
+				access_token,
+			},
+		});
+	} catch (err) {
+		next(err);
+	}
+};
+
+module.exports.logoutUser = async (req, res, next) => {
+	try {
+		const user = req.user;
+		await Token.deleteOne({user: user.id});
 		return res.sendStatus(204);
 	} catch (err) {
 		next(err);

@@ -4,6 +4,7 @@ const constants = {
 		process.env.MONGODB_URI ??
 		'mongodb://localhost:27017/complete_todo_app',
 	JWT_SECRET: process.env.JWT_SECRET ?? 'some_stupid_secret',
+	JWT_SECRET_RT: process.env.JWT_SECRET_RT ?? 'some_stupid_secret',
 };
 
 module.exports = constants;
