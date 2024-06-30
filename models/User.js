@@ -16,6 +16,9 @@ const userSchema = new Schema(
 			type: String,
 			required: true,
 		},
+		profilePicPath: {
+			type: String,
+		},
 		// tasks: [
 		// 	{
 		// 		type: Schema.Types.ObjectId,
