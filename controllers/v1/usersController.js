@@ -159,3 +159,18 @@ module.exports.logout = async (req, res, next) => {
 		next(err);
 	}
 };
+
+module.exports.setProfilePic = async (req, res, next) => {
+	try {
+		const profilePicPath = `/user_profile/${req.file.filename}`;
+		let user = req.user;
+		user.profilePicPath = profilePicPath;
+		await user.save();
+		return res.status(200).json({
+			msg: 'Profile Image Uploaded',
+			profilePicPath,
+		});
+	} catch (err) {
+		next(err);
+	}
+};

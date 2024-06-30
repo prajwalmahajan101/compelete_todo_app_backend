@@ -4,6 +4,10 @@ require('./utils/db');
 const express = require('express');
 const app = express();
 
+app.use(express.static('./static'));
+
+app.use(express.urlencoded({extended: true}));
+
 app.use(express.json());
 
 app.use('/api', require('./routes'));
